@@ -20,6 +20,8 @@ assert(){
 # assert <expected> <input>
 assert 0 0
 assert 123 123
+assert 6 '1+2+3'
+assert 2 '1-2+3'
 
 rm tmp tmp.s
 echo OK
