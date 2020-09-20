@@ -20,10 +20,15 @@ struct Token {
 
 // 現在着目しているトークン
 Token *token;
+char *user_input;
 
-void error(char *fmt, ...) {
+void error(char *loc, char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
+    int pos = loc - user_input;
+    fprintf(stderr, "%s\n", user_input);
+    fprintf(stderr, "%*s", pos, "");
+    fprintf(stderr, "^ ");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
     exit(1);
@@ -41,7 +46,7 @@ bool consume(char op) {
 // 次のトークンが期待している記号のときは、トークンを１つ進める
 bool expect(char op) {
     if (token->kind != TK_RESERVED || token->str[0] != op) {
-        error("%cではありません", op);
+        error(token->str, "%cではありません", op);
     }
     token = token->next;
 }
@@ -49,7 +54,7 @@ bool expect(char op) {
 // 次のトークンが数値のときは、トークンを１つ進めて、数値を返す
 int expect_number() {
     if (token->kind != TK_NUM) {
-        error("数ではありません");
+        error(token->str, "数ではありません");
     }
     int val = token->val;
     token = token -> next;
@@ -88,7 +93,7 @@ Token *tokenize(char *p) {
             cur->val = strtol(p, &p, 10);
             continue;
         }
-        error("トークナイズできません");
+        error(cur->str, "トークナイズできません");
     }
     new_token(TK_EOF, cur, p);
     return head.next;
@@ -99,7 +104,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "引数の個数が正しくありません\n");
         return 1;
     }
-
+    user_input = argv[1];
     token = tokenize(argv[1]);
 
     printf(".intel_syntax noprefix\n");
