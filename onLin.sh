@@ -1,3 +1,3 @@
 #!/bin/bash
-
-docker run --rm -it -v ~/works/github/myc/:/home/myc -w /home/myc debian $@
+CURRENT=$(cd $(dirname $0); pwd)
+docker run --rm -it -v $CURRENT:/home/myc -w /home/myc debian $@
