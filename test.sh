@@ -24,6 +24,8 @@ assert 6 '1+2+3'
 assert 2 '1-2+3'
 assert 24 '(4*2)*3'
 assert 20 '(30*2)/3'
+assert 5 '-3+(4*2)'
+assert 11 '+3+(4*2)'
 
 rm tmp tmp.s
 echo OK
