@@ -44,7 +44,7 @@ bool consume(char op) {
 }
 
 // 次のトークンが期待している記号のときは、トークンを１つ進める
-bool expect(char op) {
+void expect(char op) {
     if (token->kind != TK_RESERVED || token->str[0] != op) {
         error(token->str, "%cではありません", op);
     }
