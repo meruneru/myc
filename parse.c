@@ -87,7 +87,7 @@ Token *tokenize(char *p) {
             p += 2;
             continue;
         }
-        if (strchr("+-*/()<>;", *p)) {
+        if (strchr("+-*/()<>;=", *p)) {
             cur = new_token(TK_RESERVED, cur, p++);
             cur->len = 1;
             continue;
@@ -100,7 +100,7 @@ Token *tokenize(char *p) {
             cur->len = p - q;
             continue;
         }
-        if (('a' <= p[0]) && (p[0] <= 'z')) {
+        if (('a' <= *p) && (*p <= 'z')) {
             cur = new_token(TK_IDENT, cur, p++);
             cur->len = 1;
             continue;

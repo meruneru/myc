@@ -34,6 +34,9 @@ assert 1 '2<=20;'
 assert 0 '2>2;'
 assert 1 '3>2;'
 assert 7 '1-2+3;7;'
+assert 3 'a = 3;'
+assert 22 'b = 5*6-8;'
+assert 14 'a = 3;b = 5*6-8;b = a+b/2;'
 
 rm tmp tmp.s
 echo OK
