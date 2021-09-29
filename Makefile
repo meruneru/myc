@@ -2,10 +2,13 @@ CFLAGS=-std=c11 -g -static
 SRCS=$(wildcard *.c)
 OBJS=$(SRCS:.c=.o)
 
+all : myc
+
 myc: $(OBJS)
 	$(CC) -o myc $(OBJS) $(LDFLAGS)
 
 $(OBJS): myc.h
+
 
 test: myc 
 	./test.sh
@@ -13,5 +16,5 @@ test: myc
 clean:
 	rm -f myc *.o *~ tmp*
 
-.PHONY: test clean
+.PHONY: test clean all
 
