@@ -1,16 +1,17 @@
 #ifndef INCLUDED_MYC
 #define INCLUDED_MYC
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef enum {
-    TK_RESERVED, //Sign
-    TK_NUM,
+    TK_RESERVED,  //記号
+    TK_IDENT,     //識別子
+    TK_NUM,       //整数トークン
     TK_EOF,
 } TokenKind;
 
@@ -27,36 +28,42 @@ struct Token {
 extern Token *token;
 extern char *user_input;
 
-//parse.c
+// parse.c
 void error(char *loc, char *fmt, ...);
 Token *tokenize(char *p);
 
-bool consume(char* op);
-void expect(char* op);
+bool consume(char *op);
+Token *consume_ident();
+void expect(char *op);
 int expect_number();
 bool at_eof();
 
-//codegen.c
-typedef enum{
-    ND_ADD, // +
-    ND_SUB, // -
-    ND_MUL, // *
-    ND_DIV, // /
-    ND_EQ,  // ==
-    ND_NE,  // !=
-    ND_LT,  // <
-    ND_LE,  // <=
+// codegen.c
+typedef enum {
+    ND_ADD,     // +
+    ND_SUB,     // -
+    ND_MUL,     // *
+    ND_DIV,     // /
+    ND_ASSIGN,  // =
+    ND_LVAR,    // ローカル変数
+    ND_EQ,      // ==
+    ND_NE,      // !=
+    ND_LT,      // <
+    ND_LE,      // <=
     ND_NUM,
 } NodeKind;
 
 typedef struct Node Node;
-struct Node{
+struct Node {
     NodeKind kind;
-    Node* rhs;
-    Node* lhs;
-    int val; // kind==ND_NUM only
+    Node *rhs;
+    Node *lhs;
+    int val;     // kind==ND_NUM only
+    int offset;  // kind==ND_LVAR only
 };
 
-Node* expr();
-void gen(Node* node);
+extern Node *code[100];
+
+void program();
+void gen(Node *node);
 #endif
