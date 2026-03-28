@@ -1,10 +1,11 @@
 #include "./myc.h"
 
 // 現在着目しているトークン
-Token *token;
-char *user_input;
+Token* token;
+char* user_input;
+LVar* locals;
 
-void error(char *loc, char *fmt, ...) {
+void error(char* loc, char* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     int pos = loc - user_input;
@@ -16,8 +17,16 @@ void error(char *loc, char *fmt, ...) {
     exit(1);
 }
 
+// 変数を名前で検索する。見つからなかった場合はNULLを返す。
+LVar* find_lvar(Token* tok) {
+    for (LVar* var = locals; var; var = var->next)
+        if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+            return var;
+    return NULL;
+}
+
 // 次のトークンが期待している記号のときは、トークンを１つ進める
-bool consume(char *op) {
+bool consume(char* op) {
     if (token->kind != TK_RESERVED || token->len != strlen(op) ||
         memcmp(token->str, op, token->len)) {
         return false;
@@ -27,17 +36,17 @@ bool consume(char *op) {
 }
 
 // 次のトークンが期待している記号のときは、トークンを１つ進める
-Token *consume_ident() {
+Token* consume_ident() {
     if (token->kind != TK_IDENT) {
         return NULL;
     }
-    Token *t = token;
+    Token* t = token;
     token = token->next;
     return t;
 }
 
 // 次のトークンが期待している記号のときは、トークンを１つ進める
-void expect(char *op) {
+void expect(char* op) {
     if (token->kind != TK_RESERVED || token->len != strlen(op) ||
         memcmp(token->str, op, token->len)) {
         error(token->str, "%sではありません", op);
@@ -58,22 +67,28 @@ int expect_number() {
 bool at_eof() { return token->kind == TK_EOF; }
 
 // 新しいトークンを作成してcurにつなげる
-Token *new_token(TokenKind kind, Token *cur, char *str) {
-    Token *tok = calloc(1, sizeof(Token));
+Token* new_token(TokenKind kind, Token* cur, char* str) {
+    Token* tok = calloc(1, sizeof(Token));
     tok->kind = kind;
     tok->str = str;
     cur->next = tok;
     return tok;
 }
 
-bool startswith(char *str1, char *str2) {
+bool startswith(char* str1, char* str2) {
     return strncmp(str1, str2, strlen(str2)) == 0;
 }
 
-Token *tokenize(char *p) {
+bool is_alpha1(char c) {
+    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || (c == '_');
+}
+
+bool is_alpha2(char c) { return is_alpha1(c) || ('0' <= c && c <= '9'); }
+
+Token* tokenize(char* p) {
     Token head;
     head.next = NULL;
-    Token *cur = &head;
+    Token* cur = &head;
 
     while (*p) {
         if (isspace(*p)) {
@@ -95,19 +110,22 @@ Token *tokenize(char *p) {
 
         if (isdigit(*p)) {
             cur = new_token(TK_NUM, cur, p);
-            char *q = p;
+            char* q = p;
             cur->val = strtol(p, &p, 10);
             cur->len = p - q;
             continue;
         }
-        if (('a' <= *p) && (*p <= 'z')) {
-            cur = new_token(TK_IDENT, cur, p++);
-            cur->len = 1;
+        if (is_alpha1(*p)) {
+            char* start = p;
+            do {
+                p++;
+            } while (is_alpha2(*p));
+            cur = new_token(TK_IDENT, cur, start);
+            cur->len = p - start;
             continue;
         }
-        error(cur->str, "トークナイズできません");
+        error(p, "トークナイズできません");
     }
     new_token(TK_EOF, cur, p);
     return head.next;
 }
-

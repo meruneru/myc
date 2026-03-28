@@ -9,32 +9,43 @@
 #include <string.h>
 
 typedef enum {
-    TK_RESERVED,  //記号
-    TK_IDENT,     //識別子
-    TK_NUM,       //整数トークン
+    TK_RESERVED,  // 記号
+    TK_IDENT,     // 識別子
+    TK_NUM,       // 整数トークン
     TK_EOF,
 } TokenKind;
 
 typedef struct Token Token;
 struct Token {
     TokenKind kind;
-    Token *next;
+    Token* next;
     int val;
-    char *str;
+    char* str;
     int len;
 };
 
+// ローカル変数の型
+typedef struct LVar LVar;
+struct LVar {
+    LVar* next;  // 次の変数かNULL
+    char* name;  // 変数の名前
+    int len;     // 名前の長さ
+    int offset;  // RBPからのオフセット
+};
+
 // 現在着目しているトークン
-extern Token *token;
-extern char *user_input;
+extern Token* token;
+extern char* user_input;
+extern LVar* locals;
 
 // parse.c
-void error(char *loc, char *fmt, ...);
-Token *tokenize(char *p);
+void error(char* loc, char* fmt, ...);
+LVar* find_lvar(Token* tok);
+Token* tokenize(char* p);
 
-bool consume(char *op);
-Token *consume_ident();
-void expect(char *op);
+bool consume(char* op);
+Token* consume_ident();
+void expect(char* op);
 int expect_number();
 bool at_eof();
 
@@ -56,14 +67,14 @@ typedef enum {
 typedef struct Node Node;
 struct Node {
     NodeKind kind;
-    Node *rhs;
-    Node *lhs;
+    Node* rhs;
+    Node* lhs;
     int val;     // kind==ND_NUM only
     int offset;  // kind==ND_LVAR only
 };
 
-extern Node *code[100];
+extern Node* code[100];
 
 void program();
-void gen(Node *node);
+void gen(Node* node);
 #endif
