@@ -1,20 +1,22 @@
+BUILD_DIR=build
 CFLAGS=-std=c11 -g -static
 SRCS=$(wildcard *.c)
-OBJS=$(SRCS:.c=.o)
+OBJS=$(addprefix $(BUILD_DIR)/, $(SRCS:.c=.o))
 
-all : myc
+all: $(BUILD_DIR)/myc
 
-myc: $(OBJS)
-	$(CC) -o myc $(OBJS) $(LDFLAGS)
+$(BUILD_DIR)/myc: $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
-$(OBJS): myc.h
+$(BUILD_DIR)/%.o: %.c myc.h
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-
-test: myc 
+test: $(BUILD_DIR)/myc
 	./test.sh
 
 clean:
-	rm -f myc *.o *~ tmp*
+	rm -rf $(BUILD_DIR) *~ tmp*
 
 .PHONY: test clean all
 

@@ -4,7 +4,7 @@ assert(){
     expected="$1"
     input="$2"
 
-    ./myc "$input" > tmp.s
+    ./build/myc "$input" > tmp.s
     cc -o tmp tmp.s
     ./tmp
     actual="$?"
