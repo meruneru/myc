@@ -25,17 +25,19 @@ LVar* find_lvar(Token* tok) {
     return NULL;
 }
 
-// 次のトークンが期待している記号のときは、トークンを１つ進める
+// 次のトークンが期待している記号のときは、トークンを1つ進めて真を返す。
+// それ以外の場合、現在のトークンを維持したまま偽を返す。
 bool consume(char* op) {
-    if (token->kind != TK_RESERVED || token->len != strlen(op) ||
-        memcmp(token->str, op, token->len)) {
+    if ((token->kind != TK_RESERVED && token->kind != TK_RETURN) ||
+        token->len != strlen(op) || memcmp(token->str, op, token->len)) {
         return false;
     }
     token = token->next;
     return true;
 }
 
-// 次のトークンが期待している記号のときは、トークンを１つ進める
+// 次のトークンが識別子のとき、トークンを1つ進めてそのトークンを返す。
+// それ以外の場合、現在のトークンを維持したままNULLを返す。
 Token* consume_ident() {
     if (token->kind != TK_IDENT) {
         return NULL;
@@ -45,7 +47,8 @@ Token* consume_ident() {
     return t;
 }
 
-// 次のトークンが期待している記号のときは、トークンを１つ進める
+// 次のトークンが期待している記号のとき、トークンを1つ進める。
+// それ以外の記号が来た場合は、致命的なエラーを報告する。
 void expect(char* op) {
     if (token->kind != TK_RESERVED || token->len != strlen(op) ||
         memcmp(token->str, op, token->len)) {
@@ -54,7 +57,8 @@ void expect(char* op) {
     token = token->next;
 }
 
-// 次のトークンが数値のときは、トークンを１つ進めて、数値を返す
+// 次のトークンが数値であるとき、トークンを1つ進めてその数値を返す。
+// 数値以外が来た場合は、致命的なエラーを報告する。
 int expect_number() {
     if (token->kind != TK_NUM) {
         error(token->str, "数ではありません");
@@ -79,11 +83,16 @@ bool startswith(char* str1, char* str2) {
     return strncmp(str1, str2, strlen(str2)) == 0;
 }
 
-bool is_alpha1(char c) {
+int is_alpha(char c) {
+    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') ||
+           ('0' <= c && c <= '9') || (c == '_');
+}
+
+int is_alpha1(char c) {
     return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || (c == '_');
 }
 
-bool is_alpha2(char c) { return is_alpha1(c) || ('0' <= c && c <= '9'); }
+int is_alpha2(char c) { return is_alpha1(c) || ('0' <= c && c <= '9'); }
 
 Token* tokenize(char* p) {
     Token head;
@@ -93,6 +102,13 @@ Token* tokenize(char* p) {
     while (*p) {
         if (isspace(*p)) {
             p++;
+            continue;
+        }
+        if (strncmp(p, "return", 6) == 0 && !is_alpha(p[6])) {
+            cur = new_token(TK_RETURN, cur, p);
+            int len = strlen("return");
+            cur->len = len;
+            p += len;
             continue;
         }
         if (startswith(p, "==") || startswith(p, "!=") || startswith(p, "<=") ||

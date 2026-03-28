@@ -38,6 +38,7 @@ assert 3 'a = 3;'
 assert 22 'b = 5*6-8;'
 assert 14 'a = 3;b = 5*6-8;b = a+b/2;'
 assert 6 'foo=1;bar=5;foo+bar;'
+assert 3 'foo=3;bar=5;return foo;'
 
 rm tmp tmp.s
 echo OK
