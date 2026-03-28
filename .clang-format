@@ -1,0 +1,3 @@
+# スペース4個にする設定例
+BasedOnStyle: Google
+IndentWidth: 4
