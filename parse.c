@@ -29,7 +29,7 @@ LVar* find_lvar(Token* tok) {
 // それ以外の場合、現在のトークンを維持したまま偽を返す。
 bool consume(char* op) {
     if ((token->kind != TK_RESERVED && token->kind != TK_RETURN) ||
-        token->len != strlen(op) || memcmp(token->str, op, token->len)) {
+        token->len != (int)strlen(op) || memcmp(token->str, op, token->len)) {
         return false;
     }
     token = token->next;
@@ -50,7 +50,7 @@ Token* consume_ident() {
 // 次のトークンが期待している記号のとき、トークンを1つ進める。
 // それ以外の記号が来た場合は、致命的なエラーを報告する。
 void expect(char* op) {
-    if (token->kind != TK_RESERVED || token->len != strlen(op) ||
+    if (token->kind != TK_RESERVED || token->len != (int)strlen(op) ||
         memcmp(token->str, op, token->len)) {
         error(token->str, "%sではありません", op);
     }

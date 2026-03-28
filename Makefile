@@ -1,12 +1,12 @@
 BUILD_DIR=build
-CFLAGS=-std=c11 -g -static
+CFLAGS=-std=c11 -g -Wall -Wextra -Werror -fstack-protector
 SRCS=$(wildcard *.c)
 OBJS=$(addprefix $(BUILD_DIR)/, $(SRCS:.c=.o))
 
 all: $(BUILD_DIR)/myc
 
 $(BUILD_DIR)/myc: $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
 
 $(BUILD_DIR)/%.o: %.c myc.h
 	@mkdir -p $(BUILD_DIR)
