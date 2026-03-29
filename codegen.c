@@ -2,7 +2,6 @@
 int labelCnt;
 
 void gen_lval(Node* node) {
-
     if (node->kind != ND_LVAR) {
         printf("代入の左辺値は変数ではありません");
         exit(1);
@@ -15,7 +14,7 @@ void gen_lval(Node* node) {
 
 void gen(Node* node) {
     switch (node->kind) {
-        case ND_IF:
+        case ND_IF: {
             gen(node->cond);
             printf("  pop rax\n");
             printf("  cmp rax, 0\n");
@@ -32,6 +31,19 @@ void gen(Node* node) {
             }
             printf(".Lend%d:\n", labelNum);
             return;
+        }
+        case ND_WHILE: {
+            int labelNum = labelCnt++;
+            printf(".Lbegin%d:\n", labelNum);
+            gen(node->cond);
+            printf("  pop rax\n");
+            printf("  cmp rax, 0\n");
+            printf("  je .Lend%d\n", labelNum);
+            gen(node->then);
+            printf("  jmp .Lbegin%d\n", labelNum);
+            printf(".Lend%d:\n", labelNum);
+            return;
+        }
         case ND_RETURN:
             gen(node->lhs);
             printf("  pop rax\n");

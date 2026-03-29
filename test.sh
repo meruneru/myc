@@ -45,5 +45,6 @@ assert 10 'foo=0;if(foo==0)foo=10;'
 assert 10 'foo=0;if(foo==0)foo=10;else foo=5;'
 assert 10 'foo=1;if(foo)foo=10;else foo=5;'
 assert 5 'foo=1;if(foo==0)foo=10;else foo=5;'
+assert 5 'foo=0;while(foo<5)foo=foo+1;'
 rm tmp tmp.s
 echo OK
