@@ -70,6 +70,7 @@ typedef enum {
     ND_IF,
     ND_WHILE,
     ND_FOR,
+    ND_BLOCK,
 } NodeKind;
 
 typedef struct Node Node;
@@ -85,6 +86,10 @@ struct Node {
     // for only
     Node* init;  // 初期化
     Node* step;  // 更新条件
+
+    // block
+    Node* body;
+    Node* next;
 
     int val;     // kind==ND_NUM only
     int offset;  // kind==ND_LVAR only

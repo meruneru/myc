@@ -122,7 +122,7 @@ Token* tokenize(char* p) {
             p += 2;
             continue;
         }
-        if (strchr("+-*/()<>;=", *p)) {
+        if (strchr("+-*/()<>;={}", *p)) {
             cur = new_token(TK_RESERVED, cur, p++);
             cur->len = 1;
             continue;
@@ -200,6 +200,7 @@ void program() {
 }
 
 // stmt       = expr ";"
+//            | "{" stmt* "}"
 //            | "if" "(" expr ")" stmt ("else" stmt)?
 //            | "while" "(" expr ")" stmt
 //            | "for" "(" expr? ";" expr? ";" expr? ")" stmt
@@ -207,7 +208,18 @@ void program() {
 Node* stmt() {
     Node* node;
 
-    if (consume("if")) {
+    if (consume("{")) {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_BLOCK;
+        Node head = {};
+        Node* cur = &head;
+        while (!consume("}")) {
+            cur->next = stmt();
+            cur = cur->next;
+        }
+        node->body = head.next;
+        return node;
+    } else if (consume("if")) {
         node = calloc(1, sizeof(Node));
         node->kind = ND_IF;
         expect("(");

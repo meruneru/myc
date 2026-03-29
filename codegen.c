@@ -15,6 +15,14 @@ void gen_lval(Node* node) {
 void gen(Node* node) {
     if (node == NULL) return;
     switch (node->kind) {
+        case ND_BLOCK: {
+            for (Node* n = node->body; n != NULL; n = n->next) {
+                gen(n);
+                printf("  pop rax\n");
+            }
+            printf("  push 0\n");
+            return;
+        }
         case ND_IF: {
             gen(node->cond);
             printf("  pop rax\n");

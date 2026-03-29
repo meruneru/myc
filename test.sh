@@ -50,5 +50,8 @@ assert 9 'foo=0;for(bar=0; bar<10; bar=bar+1)foo=bar;return foo;'
 assert 10 'foo=0;for(bar=0; bar<10; bar=bar+1)foo=bar;return bar;'
 assert 10 'foo=0;bar=0;for(; bar<10; bar=bar+1)foo=bar;return bar;'
 assert 10 'foo=0;bar=0;for(; bar<10; )bar=bar+1;return bar;'
+assert 20 'foo=0;bar=0;for(; bar<10; ){bar=bar+1;foo=foo+2;}return foo;'
+assert 10 'foo=0;if(foo==0){foo=10;}return foo;'
+
 rm tmp tmp.s
 echo OK
