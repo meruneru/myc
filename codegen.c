@@ -1,6 +1,7 @@
 #include "./myc.h"
 
 Node* code[100];
+int labelCnt;
 
 Node* new_node(NodeKind kind, Node* lhs, Node* rhs) {
     Node* new = calloc(1, sizeof(Node));
@@ -38,11 +39,25 @@ void program() {
 }
 
 // stmt       = expr ";"
+//            | "if" "(" expr ")" stmt ("else" stmt)?
+//            | "while" "(" expr ")" stmt
+//            | "for" "(" expr? ";" expr? ";" expr? ")" stmt
 //            | return expr ";"
 Node* stmt() {
     Node* node;
 
-    if (consume("return")) {
+    if (consume("if")) {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_IF;
+        expect("(");
+        node->cond = expr();
+        expect(")");
+        node->then = stmt();
+        if (consume("else")) {
+            node->els = stmt();
+        }
+        return node;
+    } else if (consume("return")) {
         node = calloc(1, sizeof(Node));
         node->kind = ND_RETURN;
         node->lhs = expr();
@@ -178,6 +193,23 @@ void gen_lval(Node* node) {
 
 void gen(Node* node) {
     switch (node->kind) {
+        case ND_IF:
+            gen(node->cond);
+            printf("  pop rax\n");
+            printf("  cmp rax, 0\n");
+            int labelNum = labelCnt++;
+            if (node->els == NULL) {
+                printf("  je .Lend%d\n", labelNum);
+                gen(node->then);
+            } else {
+                printf("  je .Lelse%d\n", labelNum);
+                gen(node->then);
+                printf("  jmp .Lend%d\n", labelNum);
+                printf(".Lelse%d:\n", labelNum);
+                gen(node->els);
+            }
+            printf(".Lend%d:\n", labelNum);
+            return;
         case ND_RETURN:
             gen(node->lhs);
             printf("  pop rax\n");

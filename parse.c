@@ -28,7 +28,9 @@ LVar* find_lvar(Token* tok) {
 // 次のトークンが期待している記号のときは、トークンを1つ進めて真を返す。
 // それ以外の場合、現在のトークンを維持したまま偽を返す。
 bool consume(char* op) {
-    if ((token->kind != TK_RESERVED && token->kind != TK_RETURN) ||
+    if ((token->kind != TK_RESERVED && token->kind != TK_RETURN &&
+         token->kind != TK_IF && token->kind != TK_ELSE &&
+         token->kind != TK_WHILE && token->kind != TK_FOR) ||
         token->len != (int)strlen(op) || memcmp(token->str, op, token->len)) {
         return false;
     }
@@ -129,6 +131,30 @@ Token* tokenize(char* p) {
             char* q = p;
             cur->val = strtol(p, &p, 10);
             cur->len = p - q;
+            continue;
+        }
+        if (startswith(p, "if")) {
+            cur = new_token(TK_IF, cur, p);
+            cur->len = 2;
+            p += 2;
+            continue;
+        }
+        if (startswith(p, "else")) {
+            cur = new_token(TK_ELSE, cur, p);
+            cur->len = 4;
+            p += 4;
+            continue;
+        }
+        if (startswith(p, "for")) {
+            cur = new_token(TK_FOR, cur, p);
+            cur->len = 3;
+            p += 3;
+            continue;
+        }
+        if (startswith(p, "while")) {
+            cur = new_token(TK_WHILE, cur, p);
+            cur->len = 5;
+            p += 5;
             continue;
         }
         if (is_alpha1(*p)) {

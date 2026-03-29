@@ -13,6 +13,10 @@ typedef enum {
     TK_IDENT,     // 識別子
     TK_NUM,       // 整数トークン
     TK_RETURN,
+    TK_IF,
+    TK_ELSE,
+    TK_FOR,
+    TK_WHILE,
     TK_EOF,
 } TokenKind;
 
@@ -64,6 +68,9 @@ typedef enum {
     ND_LE,      // <=
     ND_NUM,
     ND_RETURN,
+    ND_IF,
+    ND_WHILE,
+    ND_FOR,
 } NodeKind;
 
 typedef struct Node Node;
@@ -71,6 +78,12 @@ struct Node {
     NodeKind kind;
     Node* rhs;
     Node* lhs;
+
+    // if, for only
+    Node* cond;  // 条件式
+    Node* then;  // 真
+    Node* els;   // 偽
+
     int val;     // kind==ND_NUM only
     int offset;  // kind==ND_LVAR only
 };
