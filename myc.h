@@ -78,10 +78,13 @@ struct Node {
     Node* rhs;
     Node* lhs;
 
-    // if, for only
+    // if, while
     Node* cond;  // 条件式
     Node* then;  // 真
     Node* els;   // 偽
+    // for only
+    Node* init;  // 初期化
+    Node* step;  // 更新条件
 
     int val;     // kind==ND_NUM only
     int offset;  // kind==ND_LVAR only
@@ -105,5 +108,3 @@ Node* primary();
 // codegen.c
 void gen(Node* node);
 #endif
-
-

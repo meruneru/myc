@@ -226,6 +226,36 @@ Node* stmt() {
         expect(")");
         node->then = stmt();
         return node;
+    } else if (consume("for")) {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_FOR;
+        expect("(");
+        //"for" "(" expr? ";" expr? ";" expr? ")" stmt
+        //           ^
+        if (consume(";")) {
+            // no expr
+        } else {
+            node->init = expr();
+            expect(";");
+        }
+        //"for" "(" expr? ";" expr? ";" expr? ")" stmt
+        //                     ^
+        if (consume(";")) {
+            // no expr
+        } else {
+            node->cond = expr();
+            expect(";");
+        }
+        //"for" "(" expr? ";" expr? ";" expr? ")" stmt
+        //                                ^
+        if (consume(")")) {
+            // no expr
+        } else {
+            node->step = expr();
+            expect(")");
+        }
+        node->then = stmt();
+        return node;
     } else if (consume("return")) {
         node = calloc(1, sizeof(Node));
         node->kind = ND_RETURN;
