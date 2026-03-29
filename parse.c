@@ -189,14 +189,57 @@ Node* new_node_num(int val) {
     return new;
 }
 
-// program    = stmt*
-void program() {
-    int i = 0;
+Function* function();
+
+// program    = function*
+Function* program() {
+    Function head = {};
+    Function* cur = &head;
 
     while (!at_eof()) {
-        code[i++] = stmt();
+        cur->next = function();
+        cur = cur->next;
     }
-    code[i] = NULL;
+    return head.next;
+}
+
+// function   = ident "(" (ident ("," ident)*)? ")" stmt
+Function* function() {
+    locals = NULL;
+    Function* fn = calloc(1, sizeof(Function));
+    Token* tok = consume_ident();
+    if (!tok) error(token->str, "関数名がありません");
+    fn->name = calloc(tok->len + 1, sizeof(char));
+    memcpy(fn->name, tok->str, tok->len);
+
+    expect("(");
+    if (!consume(")")) {
+        Node head = {};
+        Node* cur = &head;
+        do {
+            Token* t = consume_ident();
+            if (!t) error(token->str, "引数名がありません");
+            Node* node = calloc(1, sizeof(Node));
+            node->kind = ND_LVAR;
+            LVar* lvar = calloc(1, sizeof(LVar));
+            lvar->next = locals;
+            lvar->name = t->str;
+            lvar->len = t->len;
+            lvar->offset = (locals ? locals->offset : 0) + 8;
+            node->offset = lvar->offset;
+            locals = lvar;
+
+            cur->next = node;
+            cur = cur->next;
+        } while (consume(","));
+        fn->params = head.next;
+        expect(")");
+    }
+
+    fn->body = stmt();
+    fn->locals = locals;
+    fn->stack_size = (locals ? locals->offset : 0);
+    return fn;
 }
 
 // stmt       = expr ";"

@@ -101,11 +101,17 @@ struct Node {
     int offset;  // kind==ND_LVAR only
 };
 
-extern Node* code[100];
+typedef struct Function Function;
+struct Function {
+    Function* next;
+    char* name;
+    Node* params;
+    Node* body;
+    LVar* locals;
+    int stack_size;
+};
 
-Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
-Node* new_node_num(int val);
-void program();
+Function* program();
 Node* stmt();
 Node* expr();
 Node* assign();
@@ -117,5 +123,7 @@ Node* unary();
 Node* primary();
 
 // codegen.c
+void codegen(Function* prog);
 void gen(Node* node);
+extern char* argreg[];
 #endif

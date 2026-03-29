@@ -13,6 +13,37 @@ void gen_lval(Node* node) {
     printf("push rax\n");
 }
 
+void gen(Node* node);
+
+void codegen(Function* prog) {
+    printf(".intel_syntax noprefix\n");
+    for (Function* fn = prog; fn; fn = fn->next) {
+        printf(".globl %s\n", fn->name);
+        printf("%s:\n", fn->name);
+
+        // プロローグ
+        printf("  push rbp\n");
+        printf("  mov rbp, rsp\n");
+        // スタックサイズを16バイト境界に切り上げる
+        int stack_size = (fn->stack_size + 15) / 16 * 16;
+        printf("  sub rsp, %d\n", stack_size);
+
+        // 引数をスタックにコピー
+        int i = 0;
+        for (Node* param = fn->params; param; param = param->next) {
+            printf("  mov [rbp-%d], %s\n", param->offset, argreg[i++]);
+        }
+
+        gen(fn->body);
+        printf("  pop rax\n");
+
+        // エピローグ
+        printf("  mov rsp, rbp\n");
+        printf("  pop rbp\n");
+        printf("  ret\n");
+    }
+}
+
 void gen(Node* node) {
     if (node == NULL) return;
     switch (node->kind) {
