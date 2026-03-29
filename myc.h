@@ -54,7 +54,6 @@ void expect(char* op);
 int expect_number();
 bool at_eof();
 
-// codegen.c
 typedef enum {
     ND_ADD,     // +
     ND_SUB,     // -
@@ -90,6 +89,21 @@ struct Node {
 
 extern Node* code[100];
 
+Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
+Node* new_node_num(int val);
 void program();
+Node* stmt();
+Node* expr();
+Node* assign();
+Node* equality();
+Node* relational();
+Node* add();
+Node* mul();
+Node* unary();
+Node* primary();
+
+// codegen.c
 void gen(Node* node);
 #endif
+
+
