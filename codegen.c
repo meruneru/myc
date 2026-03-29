@@ -1,5 +1,6 @@
 #include "./myc.h"
 int labelCnt;
+char* argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 void gen_lval(Node* node) {
     if (node->kind != ND_LVAR) {
@@ -15,6 +16,36 @@ void gen_lval(Node* node) {
 void gen(Node* node) {
     if (node == NULL) return;
     switch (node->kind) {
+        case ND_FUNC: {
+            int nargs = 0;
+            for (Node* arg = node->args; arg; arg = arg->next) {
+                gen(arg);
+                nargs++;
+            }
+
+            for (int i = nargs - 1; i >= 0; i--) {
+                printf("  pop %s\n", argreg[i]);
+            }
+
+            int labelNum = labelCnt++;
+            printf("  mov rax, rsp\n");
+            printf("  and rax, 15\n");
+            printf("  jnz .L.call.%d\n", labelNum);
+
+            printf("  mov rax, 0\n");
+            printf("  call %.*s\n", node->len, node->funcname);
+            printf("  jmp .L.end.%d\n", labelNum);
+
+            printf(".L.call.%d:\n", labelNum);
+            printf("  sub rsp, 8\n");
+            printf("  mov rax, 0\n");
+            printf("  call %.*s\n", node->len, node->funcname);
+            printf("  add rsp, 8\n");
+
+            printf(".L.end.%d:\n", labelNum);
+            printf("  push rax\n");
+            return;
+        }
         case ND_BLOCK: {
             for (Node* n = node->body; n != NULL; n = n->next) {
                 gen(n);

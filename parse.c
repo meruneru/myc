@@ -122,7 +122,7 @@ Token* tokenize(char* p) {
             p += 2;
             continue;
         }
-        if (strchr("+-*/()<>;={}", *p)) {
+        if (strchr("+-*/()<>;={},", *p)) {
             cur = new_token(TK_RESERVED, cur, p++);
             cur->len = 1;
             continue;
@@ -364,23 +364,44 @@ Node* unary() {
     return primary();
 }
 
-// primary = num | ident | "(" expr ")"
+// primary = num
+//          | ident ("(" (expr ("," expr)*)? ")")?
+//          | "(" expr ")"
 Node* primary() {
     Token* tok = consume_ident();
     if (tok) {
         Node* node = calloc(1, sizeof(Node));
-        node->kind = ND_LVAR;
-        LVar* lvar = find_lvar(tok);
-        if (lvar) {
-            node->offset = lvar->offset;
+        if (consume("(")) {
+            node->kind = ND_FUNC;
+            node->funcname = tok->str;
+            node->len = tok->len;
+
+            if (consume(")")) {
+                return node;
+            }
+
+            Node head = {};
+            Node* cur = &head;
+            do {
+                cur->next = expr();
+                cur = cur->next;
+            } while (consume(","));
+            expect(")");
+            node->args = head.next;
         } else {
-            lvar = calloc(1, sizeof(LVar));
-            lvar->next = locals;
-            lvar->name = tok->str;
-            lvar->len = tok->len;
-            lvar->offset = (locals ? locals->offset : 0) + 8;
-            node->offset = lvar->offset;
-            locals = lvar;
+            node->kind = ND_LVAR;
+            LVar* lvar = find_lvar(tok);
+            if (lvar) {
+                node->offset = lvar->offset;
+            } else {
+                lvar = calloc(1, sizeof(LVar));
+                lvar->next = locals;
+                lvar->name = tok->str;
+                lvar->len = tok->len;
+                lvar->offset = (locals ? locals->offset : 0) + 8;
+                node->offset = lvar->offset;
+                locals = lvar;
+            }
         }
         return node;
     }
