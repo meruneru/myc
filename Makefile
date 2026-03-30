@@ -18,7 +18,7 @@ $(TEST_HELPER): test_helper.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 test: $(BUILD_DIR)/myc $(TEST_HELPER)
-	./test.sh
+	gosh test.scm
 
 clean:
 	rm -rf $(BUILD_DIR) *~ tmp*
