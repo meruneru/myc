@@ -8,8 +8,6 @@ int main(int argc, char** argv) {
     // tokenizeされたものはcode[]に格納される
     user_input = argv[1];
     token = tokenize(argv[1]);
-    user_input = argv[1];
-    token = tokenize(argv[1]);
     Function* prog = program();
     codegen(prog);
 
