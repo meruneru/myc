@@ -71,7 +71,11 @@
     (21 . "main() { return add6(1, 2, 3, 4, 5, 6); }")
     (7 . "main() { return add2(3, 4); } add2(x, y) { return x + y; }")
     (1 . "main() { return sub2(4, 3); } sub2(x, y) { return x - y; }")
+    (1 . "main() { return sub2(4, 3); } sub2(x, y) { return x - y; }")
     (55 . "main() { return fib(10); } fib(n) { if(n<=1) return n; return fib(n-1) + fib(n-2); }")
+    (3 . "main() { x = 3; y = &x; return *y; }")
+    (3 . "main() { x = 3; y = 5; z = &y + 8; return *z; }")
+    (4 . "main() { x = 3; p = &x; *p = 4; return x; }")
   ))
 
 ;; 並列実行の実行

@@ -122,7 +122,7 @@ Token* tokenize(char* p) {
             p += 2;
             continue;
         }
-        if (strchr("+-*/()<>;={},", *p)) {
+        if (strchr("+-*/()<>;={},&", *p)) {
             cur = new_token(TK_RESERVED, cur, p++);
             cur->len = 1;
             continue;
@@ -398,15 +398,20 @@ Node* mul() {
 }
 
 // unary   = ("+" | "-")? primary
+//          | "*" unary
+//          | "&" unary
 Node* unary() {
     if (consume("+")) {
         return primary();
     } else if (consume("-")) {
         return new_node(ND_SUB, new_node_num(0), primary());
+    } else if (consume("*")) {
+        return new_node(ND_DEREF, unary(), NULL);
+    } else if (consume("&")) {
+        return new_node(ND_ADDR, unary(), NULL);
     }
     return primary();
 }
-
 // primary = num
 //          | ident ("(" (expr ("," expr)*)? ")")?
 //          | "(" expr ")"

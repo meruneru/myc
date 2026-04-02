@@ -3,14 +3,19 @@ int labelCnt;
 char* argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 void gen_lval(Node* node) {
+    if (node->kind == ND_DEREF) {
+        gen(node->lhs);
+        return;
+    }
+
     if (node->kind != ND_LVAR) {
         printf("代入の左辺値は変数ではありません");
         exit(1);
     }
 
-    printf("mov rax, rbp\n");
-    printf("sub rax, %d\n", node->offset);
-    printf("push rax\n");
+    printf("  mov rax, rbp\n");
+    printf("  sub rax, %d\n", node->offset);
+    printf("  push rax\n");
 }
 
 void gen(Node* node);
@@ -47,6 +52,15 @@ void codegen(Function* prog) {
 void gen(Node* node) {
     if (node == NULL) return;
     switch (node->kind) {
+        case ND_ADDR:
+            gen_lval(node->lhs);
+            return;
+        case ND_DEREF:
+            gen(node->lhs);
+            printf("  pop rax\n");
+            printf("  mov rax, [rax]\n");
+            printf("  push rax\n");
+            return;
         case ND_FUNC: {
             int nargs = 0;
             for (Node* arg = node->args; arg; arg = arg->next) {
