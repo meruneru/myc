@@ -32,7 +32,8 @@ LVar* find_lvar(Token* tok) {
 bool consume(char* op) {
     if ((token->kind != TK_RESERVED && token->kind != TK_RETURN &&
          token->kind != TK_IF && token->kind != TK_ELSE &&
-         token->kind != TK_WHILE && token->kind != TK_FOR) ||
+         token->kind != TK_WHILE && token->kind != TK_FOR &&
+         token->kind != TK_INT) ||
         token->len != (int)strlen(op) || memcmp(token->str, op, token->len)) {
         return false;
     }
@@ -54,8 +55,11 @@ Token* consume_ident() {
 // 次のトークンが期待している記号のとき、トークンを1つ進める。
 // それ以外の記号が来た場合は、致命的なエラーを報告する。
 void expect(char* op) {
-    if (token->kind != TK_RESERVED || token->len != (int)strlen(op) ||
-        memcmp(token->str, op, token->len)) {
+    if ((token->kind != TK_RESERVED && token->kind != TK_RETURN &&
+         token->kind != TK_IF && token->kind != TK_ELSE &&
+         token->kind != TK_WHILE && token->kind != TK_FOR &&
+         token->kind != TK_INT) ||
+        token->len != (int)strlen(op) || memcmp(token->str, op, token->len)) {
         error(token->str, "%sではありません", op);
     }
     token = token->next;
@@ -135,6 +139,12 @@ Token* tokenize(char* p) {
             cur->len = p - q;
             continue;
         }
+        if (strncmp(p, "int", 3) == 0 && !is_alpha(p[3])) {
+            cur = new_token(TK_INT, cur, p);
+            cur->len = 3;
+            p += 3;
+            continue;
+        }
         if (startswith(p, "if")) {
             cur = new_token(TK_IF, cur, p);
             cur->len = 2;
@@ -203,10 +213,12 @@ Function* program() {
     return head.next;
 }
 
-// function   = ident "(" (ident ("," ident)*)? ")" stmt
+// function   = "int" ident "(" ("int" ident ("," "int" ident)*)? ")" stmt
 Function* function() {
     locals = NULL;
     Function* fn = calloc(1, sizeof(Function));
+
+    expect("int");
     Token* tok = consume_ident();
     if (!tok) error(token->str, "関数名がありません");
     fn->name = calloc(tok->len + 1, sizeof(char));
@@ -217,6 +229,7 @@ Function* function() {
         Node head = {};
         Node* cur = &head;
         do {
+            expect("int");
             Token* t = consume_ident();
             if (!t) error(token->str, "引数名がありません");
             Node* node = calloc(1, sizeof(Node));
@@ -243,6 +256,7 @@ Function* function() {
 }
 
 // stmt       = expr ";"
+//            | "int" "*"* ident ";"
 //            | "{" stmt* "}"
 //            | "if" "(" expr ")" stmt ("else" stmt)?
 //            | "while" "(" expr ")" stmt
@@ -250,6 +264,24 @@ Function* function() {
 //            | return expr ";"
 Node* stmt() {
     Node* node;
+
+    if (consume("int")) {
+        while (consume("*"));
+        Token* tok = consume_ident();
+        if (!tok) error(token->str, "識別子ではありません");
+
+        LVar* lvar = calloc(1, sizeof(LVar));
+        lvar->next = locals;
+        lvar->name = tok->str;
+        lvar->len = tok->len;
+        lvar->offset = (locals ? locals->offset : 0) + 8;
+        locals = lvar;
+
+        expect(";");
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_BLOCK;
+        return node;  // ND_BLOCK (body=NULL) as dummy
+    }
 
     if (consume("{")) {
         node = calloc(1, sizeof(Node));
@@ -418,8 +450,8 @@ Node* unary() {
 Node* primary() {
     Token* tok = consume_ident();
     if (tok) {
-        Node* node = calloc(1, sizeof(Node));
         if (consume("(")) {
+            Node* node = calloc(1, sizeof(Node));
             node->kind = ND_FUNC;
             node->funcname = tok->str;
             node->len = tok->len;
@@ -436,21 +468,16 @@ Node* primary() {
             } while (consume(","));
             expect(")");
             node->args = head.next;
-        } else {
-            node->kind = ND_LVAR;
-            LVar* lvar = find_lvar(tok);
-            if (lvar) {
-                node->offset = lvar->offset;
-            } else {
-                lvar = calloc(1, sizeof(LVar));
-                lvar->next = locals;
-                lvar->name = tok->str;
-                lvar->len = tok->len;
-                lvar->offset = (locals ? locals->offset : 0) + 8;
-                node->offset = lvar->offset;
-                locals = lvar;
-            }
+            return node;
         }
+
+        LVar* lvar = find_lvar(tok);
+        if (!lvar) {
+            error(tok->str, "定義されていない変数です");
+        }
+        Node* node = calloc(1, sizeof(Node));
+        node->offset = lvar->offset;
+        node->kind = ND_LVAR;
         return node;
     }
     if (consume("(")) {
