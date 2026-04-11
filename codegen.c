@@ -2,22 +2,7 @@
 int labelCnt;
 char* argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
-void gen_lval(Node* node) {
-    if (node->kind == ND_DEREF) {
-        gen(node->lhs);
-        return;
-    }
-
-    if (node->kind != ND_LVAR) {
-        printf("代入の左辺値は変数ではありません");
-        exit(1);
-    }
-
-    printf("  mov rax, rbp\n");
-    printf("  sub rax, %d\n", node->offset);
-    printf("  push rax\n");
-}
-
+void gen_lval(Node* node);
 void gen(Node* node);
 
 void codegen(Function* prog) {
@@ -49,6 +34,7 @@ void codegen(Function* prog) {
     }
 }
 
+// 右辺値として評価してスタックにプッシュ
 void gen(Node* node) {
     if (node == NULL) return;
     switch (node->kind) {
@@ -216,5 +202,22 @@ void gen(Node* node) {
             // do noting
             break;
     }
+    printf("  push rax\n");
+}
+
+// 左辺値として評価してスタックにプッシュ
+void gen_lval(Node* node) {
+    if (node->kind == ND_DEREF) {
+        gen(node->lhs);
+        return;
+    }
+
+    if (node->kind != ND_LVAR) {
+        printf("代入の左辺値は変数ではありません");
+        exit(1);
+    }
+
+    printf("  mov rax, rbp\n");
+    printf("  sub rax, %d\n", node->offset);
     printf("  push rax\n");
 }
