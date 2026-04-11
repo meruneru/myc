@@ -76,6 +76,7 @@
     (3 . "int main() { int x; int *y; x = 3; y = &x; return *y; }")
     (3 . "int main() { int x; int y; int *z; x = 3; y = 5; z = &y + 8; return *z; }")
     (4 . "int main() { int x; int *p; x = 3; p = &x; *p = 4; return x; }")
+    (10 . "int main() {int x;int *y;y=&x;*y=10;return x;}")
   ))
 
 ;; 並列実行の実行

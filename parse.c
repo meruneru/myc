@@ -213,7 +213,7 @@ Function* program() {
     return head.next;
 }
 
-// function   = "int" ident "(" ("int" ident ("," "int" ident)*)? ")" stmt
+// function   = "int" ident "(" ("int" "*"* ident ("," "int" ident)*)? ")" stmt
 Function* function() {
     locals = NULL;
     Function* fn = calloc(1, sizeof(Function));
@@ -230,6 +230,12 @@ Function* function() {
         Node* cur = &head;
         do {
             expect("int");
+            Type ty = {INT, NULL};
+            while (consume("*")) {
+                Type next = {PTR, calloc(1, sizeof(Type))};
+                *next.ptr_to = ty;
+                ty = next;
+            }
             Token* t = consume_ident();
             if (!t) error(token->str, "引数名がありません");
             Node* node = calloc(1, sizeof(Node));
@@ -239,6 +245,7 @@ Function* function() {
             lvar->name = t->str;
             lvar->len = t->len;
             lvar->offset = (locals ? locals->offset : 0) + 8;
+            lvar->type = ty;
             node->offset = lvar->offset;
             locals = lvar;
 
@@ -266,7 +273,12 @@ Node* stmt() {
     Node* node;
 
     if (consume("int")) {
-        while (consume("*"));
+        Type ty = {INT, NULL};
+        while (consume("*")) {
+            Type next = {PTR, calloc(1, sizeof(Type))};
+            *next.ptr_to = ty;
+            ty = next;
+        }
         Token* tok = consume_ident();
         if (!tok) error(token->str, "識別子ではありません");
 
@@ -275,6 +287,7 @@ Node* stmt() {
         lvar->name = tok->str;
         lvar->len = tok->len;
         lvar->offset = (locals ? locals->offset : 0) + 8;
+        lvar->type = ty;
         locals = lvar;
 
         expect(";");

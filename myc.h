@@ -30,6 +30,12 @@ struct Token {
     int len;
 };
 
+typedef struct Type Type;
+struct Type {
+    enum { INT, PTR } ty;
+    struct Type* ptr_to;
+};
+
 // ローカル変数の型
 typedef struct LVar LVar;
 struct LVar {
@@ -37,6 +43,7 @@ struct LVar {
     char* name;  // 変数の名前
     int len;     // 名前の長さ
     int offset;  // RBPからのオフセット
+    Type type;
 };
 
 // 現在着目しているトークン
