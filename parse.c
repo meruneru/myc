@@ -85,7 +85,7 @@ bool consume(char* op) {
     if ((token->kind != TK_RESERVED && token->kind != TK_RETURN &&
          token->kind != TK_IF && token->kind != TK_ELSE &&
          token->kind != TK_WHILE && token->kind != TK_FOR &&
-         token->kind != TK_INT) ||
+         token->kind != TK_INT && token->kind != TK_SIZEOF) ||
         token->len != (int)strlen(op) || memcmp(token->str, op, token->len)) {
         return false;
     }
@@ -110,7 +110,7 @@ void expect(char* op) {
     if ((token->kind != TK_RESERVED && token->kind != TK_RETURN &&
          token->kind != TK_IF && token->kind != TK_ELSE &&
          token->kind != TK_WHILE && token->kind != TK_FOR &&
-         token->kind != TK_INT) ||
+         token->kind != TK_INT && token->kind != TK_SIZEOF) ||
         token->len != (int)strlen(op) || memcmp(token->str, op, token->len)) {
         error(token->str, "%sではありません", op);
     }
@@ -219,6 +219,12 @@ Token* tokenize(char* p) {
             cur = new_token(TK_WHILE, cur, p);
             cur->len = 5;
             p += 5;
+            continue;
+        }
+        if (strncmp(p, "sizeof", 6) == 0 && !is_alpha(p[6])) {
+            cur = new_token(TK_SIZEOF, cur, p);
+            cur->len = 6;
+            p += 6;
             continue;
         }
         if (is_alpha1(*p)) {
@@ -546,11 +552,16 @@ Node* mul() {
     }
 }
 
-// unary   = ("+" | "-")? primary
+// unary   = sizeof unary
+//          |("+" | "-")? primary
 //          | "*" unary
 //          | "&" unary
 Node* unary() {
-    if (consume("+")) {
+    if (consume("sizeof")) {
+        Node* node = unary();
+        add_type(node);
+        return new_node_num(type_size(node->type));
+    } else if (consume("+")) {
         return primary();
     } else if (consume("-")) {
         return new_node(ND_SUB, new_node_num(0), primary());

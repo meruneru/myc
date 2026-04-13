@@ -80,6 +80,12 @@
     (4 . "int main() { int *p; alloc4(&p, 1, 2, 4, 8); int *q; q = p + 2; return *q; }")
     (8 . "int main() { int *p; alloc4(&p, 1, 2, 4, 8); int *q; q = p + 3; return *q; }")
     (3 . "int main() { int *p; alloc4(&p, 1, 2, 4, 8); int *q; q = p + 3; return q - p; }")
+    (4 . "int main(){ int x;return sizeof(x);}")
+    (4 . "int main(){ int x;return sizeof(x+1);}")
+    (8 . "int main(){ int *y;return sizeof(y);}")
+    (8 . "int main(){ int *y;return sizeof(y+1);}")
+    (4 . "int main(){ int x;return sizeof(sizeof(x));}")
+    (4 . "int main(){ return sizeof(sizeof(1));}")
   ))
 
 ;; 並列実行の実行
