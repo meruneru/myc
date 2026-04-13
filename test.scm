@@ -74,9 +74,12 @@
     (1 . "int main() { return sub2(4, 3); } int sub2(int x, int y) { return x - y; }")
     (55 . "int main() { return fib(10); } int fib(int n) { if(n<=1) return n; return fib(n-1) + fib(n-2); }")
     (3 . "int main() { int x; int *y; x = 3; y = &x; return *y; }")
-    (3 . "int main() { int x; int y; int *z; x = 3; y = 5; z = &y + 8; return *z; }")
+    (3 . "int main() { int x; int y; int *z; x = 3; y = 5; z = &y + 2; return *z; }")
     (4 . "int main() { int x; int *p; x = 3; p = &x; *p = 4; return x; }")
     (10 . "int main() {int x;int *y;y=&x;*y=10;return x;}")
+    (4 . "int main() { int *p; alloc4(&p, 1, 2, 4, 8); int *q; q = p + 2; return *q; }")
+    (8 . "int main() { int *p; alloc4(&p, 1, 2, 4, 8); int *q; q = p + 3; return *q; }")
+    (3 . "int main() { int *p; alloc4(&p, 1, 2, 4, 8); int *q; q = p + 3; return q - p; }")
   ))
 
 ;; 並列実行の実行

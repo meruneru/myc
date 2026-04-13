@@ -19,6 +19,58 @@ void error(char* loc, char* fmt, ...) {
     exit(1);
 }
 
+int type_size(Type* ty) {
+    if (ty->ty == INT) return 4;
+    return 8;
+}
+
+void add_type(Node* node) {
+    if (!node || node->type) return;
+
+    add_type(node->lhs);
+    add_type(node->rhs);
+    add_type(node->cond);
+    add_type(node->then);
+    add_type(node->els);
+    add_type(node->init);
+    add_type(node->step);
+
+    for (Node* n = node->body; n; n = n->next) add_type(n);
+    for (Node* n = node->args; n; n = n->next) add_type(n);
+
+    switch (node->kind) {
+        case ND_ADD:
+        case ND_SUB:
+        case ND_MUL:
+        case ND_DIV:
+        case ND_ASSIGN:
+            node->type = node->lhs->type;
+            return;
+        case ND_EQ:
+        case ND_NE:
+        case ND_LT:
+        case ND_LE:
+        case ND_NUM:
+        case ND_FUNC:
+            node->type = calloc(1, sizeof(Type));
+            node->type->ty = INT;
+            return;
+        case ND_ADDR:
+            node->type = calloc(1, sizeof(Type));
+            node->type->ty = PTR;
+            node->type->ptr_to = node->lhs->type;
+            return;
+        case ND_DEREF:
+            if (node->lhs->type->ty == PTR)
+                node->type = node->lhs->type->ptr_to;
+            else
+                node->type = node->lhs->type;
+            return;
+        default:
+            return;
+    }
+}
+
 // 変数を名前で検索する。見つからなかった場合はNULLを返す。
 LVar* find_lvar(Token* tok) {
     for (LVar* var = locals; var; var = var->next)
@@ -196,7 +248,59 @@ Node* new_node_num(int val) {
     Node* new = calloc(1, sizeof(Node));
     new->kind = ND_NUM;
     new->val = val;
+    new->type = calloc(1, sizeof(Type));
+    new->type->ty = INT;
     return new;
+}
+
+Node* new_add(Node* lhs, Node* rhs) {
+    add_type(lhs);
+    add_type(rhs);
+
+    // 1+2
+    if (lhs->type->ty == INT && rhs->type->ty == INT)
+        return new_node(ND_ADD, lhs, rhs);
+    // int*p,q; p+q;
+    if (lhs->type->ty == PTR && rhs->type->ty == PTR)
+        error(user_input, "ポインタ同士の加算はできません");
+    // int*p; 1+p;
+    if (lhs->type->ty == INT && rhs->type->ty == PTR) {
+        Node* tmp = lhs;
+        lhs = rhs;
+        rhs = tmp;
+    }
+
+    // PTR + INT
+    rhs = new_node(ND_MUL, rhs, new_node_num(type_size(lhs->type->ptr_to)));
+    return new_node(ND_ADD, lhs, rhs);
+}
+
+Node* new_sub(Node* lhs, Node* rhs) {
+    add_type(lhs);
+    add_type(rhs);
+
+    // 1+2
+    if (lhs->type->ty == INT && rhs->type->ty == INT)
+        return new_node(ND_SUB, lhs, rhs);
+
+    // int *p; p - 3;
+    if (lhs->type->ty == PTR && rhs->type->ty == INT) {
+        rhs = new_node(ND_MUL, rhs, new_node_num(type_size(lhs->type->ptr_to)));
+        add_type(rhs);
+        return new_node(ND_SUB, lhs, rhs);
+    }
+
+    // p-q
+    if (lhs->type->ty == PTR && rhs->type->ty == PTR) {
+        Node* node = new_node(ND_SUB, lhs, rhs);
+        node->type = calloc(1, sizeof(Type));
+        node->type->ty = INT;
+        return new_node(ND_DIV, node,
+                        new_node_num(type_size(lhs->type->ptr_to)));
+    }
+
+    error(user_input, "不正な減算です");
+    return NULL;
 }
 
 Function* function();
@@ -418,9 +522,9 @@ Node* add() {
 
     for (;;) {
         if (consume("+")) {
-            node = new_node(ND_ADD, node, mul());
+            node = new_add(node, mul());
         } else if (consume("-")) {
-            node = new_node(ND_SUB, node, mul());
+            node = new_sub(node, mul());
         } else {
             return node;
         }
@@ -491,6 +595,7 @@ Node* primary() {
         Node* node = calloc(1, sizeof(Node));
         node->offset = lvar->offset;
         node->kind = ND_LVAR;
+        node->type = &lvar->type;
         return node;
     }
     if (consume("(")) {

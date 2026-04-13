@@ -109,6 +109,7 @@ struct Node {
 
     int val;     // kind==ND_NUM only
     int offset;  // kind==ND_LVAR only
+    Type* type;  // 型
 };
 
 typedef struct Function Function;
