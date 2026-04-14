@@ -1,6 +1,5 @@
 #include "./myc.h"
 int labelCnt;
-char* argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 void gen_lval(Node* node);
 void gen(Node* node);
@@ -20,8 +19,13 @@ void codegen(Function* prog) {
 
         // 引数をスタックにコピー
         int i = 0;
+        char* argreg32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
+        char* argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
         for (Node* param = fn->params; param; param = param->next) {
-            printf("  mov [rbp-%d], %s\n", param->offset, argreg[i++]);
+            if (type_size(param->type) == 4)
+                printf("  mov [rbp-%d], %s\n", param->offset, argreg32[i++]);
+            else
+                printf("  mov [rbp-%d], %s\n", param->offset, argreg64[i++]);
         }
 
         gen(fn->body);
@@ -44,7 +48,10 @@ void gen(Node* node) {
         case ND_DEREF:
             gen(node->lhs);
             printf("  pop rax\n");
-            printf("  mov rax, [rax]\n");
+            if (type_size(node->type) == 4)
+                printf("  movsxd rax, dword ptr [rax]\n");
+            else
+                printf("  mov rax, [rax]\n");
             printf("  push rax\n");
             return;
         case ND_FUNC: {
@@ -141,9 +148,14 @@ void gen(Node* node) {
             return;
         case ND_LVAR:
             gen_lval(node);
-            printf("  pop rax\n");
-            printf("  mov rax, [rax]\n");
-            printf("  push rax\n");
+            if (node->type->ty != ARRAY) {
+                printf("  pop rax\n");
+                if (type_size(node->type) == 4)
+                    printf("  movsxd rax, dword ptr [rax]\n");
+                else
+                    printf("  mov rax, [rax]\n");
+                printf("  push rax\n");
+            }
             return;
         case ND_ASSIGN:
             gen_lval(node->lhs);
@@ -151,7 +163,10 @@ void gen(Node* node) {
 
             printf("  pop rdi\n");
             printf("  pop rax\n");
-            printf("  mov [rax], rdi\n");
+            if (type_size(node->lhs->type) == 4)
+                printf("  mov [rax], edi\n");
+            else
+                printf("  mov [rax], rdi\n");
             printf("  push rdi\n");
             return;
         default:

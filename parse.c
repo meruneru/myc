@@ -21,7 +21,8 @@ void error(char* loc, char* fmt, ...) {
 
 int type_size(Type* ty) {
     if (ty->ty == INT) return 4;
-    return 8;
+    if (ty->ty == PTR) return 8;
+    return ty->array_size * type_size(ty->ptr_to);
 }
 
 void add_type(Node* node) {
@@ -61,7 +62,7 @@ void add_type(Node* node) {
             node->type->ptr_to = node->lhs->type;
             return;
         case ND_DEREF:
-            if (node->lhs->type->ty == PTR)
+            if (node->lhs->type->ty == PTR || node->lhs->type->ty == ARRAY)
                 node->type = node->lhs->type->ptr_to;
             else
                 node->type = node->lhs->type;
@@ -178,7 +179,7 @@ Token* tokenize(char* p) {
             p += 2;
             continue;
         }
-        if (strchr("+-*/()<>;={},&", *p)) {
+        if (strchr("+-*/()<>;={},&[]", *p)) {
             cur = new_token(TK_RESERVED, cur, p++);
             cur->len = 1;
             continue;
@@ -340,9 +341,9 @@ Function* function() {
         Node* cur = &head;
         do {
             expect("int");
-            Type ty = {INT, NULL};
+            Type ty = {INT, NULL, 0};
             while (consume("*")) {
-                Type next = {PTR, calloc(1, sizeof(Type))};
+                Type next = {PTR, calloc(1, sizeof(Type)), 0};
                 *next.ptr_to = ty;
                 ty = next;
             }
@@ -357,6 +358,8 @@ Function* function() {
             lvar->offset = (locals ? locals->offset : 0) + 8;
             lvar->type = ty;
             node->offset = lvar->offset;
+            node->type = calloc(1, sizeof(Type));
+            *node->type = lvar->type;
             locals = lvar;
 
             cur->next = node;
@@ -367,12 +370,14 @@ Function* function() {
     }
 
     fn->body = stmt();
+    add_type(fn->body);
     fn->locals = locals;
     fn->stack_size = (locals ? locals->offset : 0);
     return fn;
 }
 
 // stmt       = expr ";"
+//            | "int" ident "[" expr "]" ";"
 //            | "int" "*"* ident ";"
 //            | "{" stmt* "}"
 //            | "if" "(" expr ")" stmt ("else" stmt)?
@@ -383,20 +388,30 @@ Node* stmt() {
     Node* node;
 
     if (consume("int")) {
-        Type ty = {INT, NULL};
+        Type ty = {INT, NULL, 0};
         while (consume("*")) {
-            Type next = {PTR, calloc(1, sizeof(Type))};
+            Type next = {PTR, calloc(1, sizeof(Type)), 0};
             *next.ptr_to = ty;
             ty = next;
         }
         Token* tok = consume_ident();
         if (!tok) error(token->str, "識別子ではありません");
 
+        if (consume("[")) {
+            Type* ety = calloc(1, sizeof(Type));
+            *ety = ty;
+            ty.ty = ARRAY;
+            ty.ptr_to = ety;
+            ty.array_size = expect_number();
+            expect("]");
+        }
         LVar* lvar = calloc(1, sizeof(LVar));
         lvar->next = locals;
         lvar->name = tok->str;
         lvar->len = tok->len;
-        lvar->offset = (locals ? locals->offset : 0) + 8;
+        int size = type_size(&ty);
+        if (size < 8) size = 8;
+        lvar->offset = (locals ? locals->offset : 0) + size;
         lvar->type = ty;
         locals = lvar;
 

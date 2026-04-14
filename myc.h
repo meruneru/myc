@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,8 +34,9 @@ struct Token {
 
 typedef struct Type Type;
 struct Type {
-    enum { INT, PTR } ty;
+    enum { INT, PTR, ARRAY } ty;
     struct Type* ptr_to;
+    size_t array_size;
 };
 
 // ローカル変数の型
@@ -56,6 +58,7 @@ extern LVar* locals;
 void error(char* loc, char* fmt, ...);
 LVar* find_lvar(Token* tok);
 Token* tokenize(char* p);
+int type_size(Type* ty);
 
 bool consume(char* op);
 Token* consume_ident();
